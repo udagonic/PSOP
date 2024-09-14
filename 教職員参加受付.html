@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Participant Registration</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        
+        .container {
+            width: 100%; /* 画面いっぱいに表示 */
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-sizing: border-box; /* パディングや境界線の幅を含める */
+        }
+        
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        label {
+            font-weight: bold;
+        }
+        
+        select, button {
+            width: calc(100% - 20px); /* 水平方向の余白を追加 */
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        
+        button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>大和大学　教育学部謝恩会　教職員受付</h2>
+        <label for="participants">お名前をご選択ください:</label>
+        <select id="participants"></select>
+        <button onclick="registerParticipant()">受付</button>
+        <button onclick="generateCSV()">CSVをダウンロード</button>
+        <audio id="notificationSound" src="https://www.soundjay.com/button/beep-07.wav"></audio>
+    </div>
+
+    <script>
+        var participants = [
+        "------選択してください------",    
+        "<先生名>　先生",
+
+        ];
+        // 参加者のリストをロードし、選択用のドロップダウンメニューに追加
+        var participantSelect = document.getElementById('participants');
+        participants.forEach(function(participant) {
+            var option = document.createElement('option');
+            option.text = participant;
+            participantSelect.add(option);
+        });
+
+        // 受付処理を行う関数
+        function registerParticipant() {
+            var selectedParticipant = document.getElementById('participants').value;
+            var currentTime = new Date().toLocaleString(); // 受付時刻
+
+            // CSV形式のデータ作成
+            var csvData = '"' + selectedParticipant + '","' + currentTime + '"\n';
+
+            // CSVファイルへの書き込み（ローカルストレージに保存）
+            var existingData = localStorage.getItem('registrations');
+            if (existingData) {
+                localStorage.setItem('registrations', existingData + csvData);
+            } else {
+                localStorage.setItem('registrations', csvData);
+            }
+
+            // 選択した参加者をリストから削除
+            var index = participants.indexOf(selectedParticipant);
+            if (index !== -1) {
+                participants.splice(index, 1);
+                updateParticipantList(); // リストを更新
+            }
+
+            // サウンドを再生
+            playNotificationSound();
+
+            alert('受付が完了しました。');
+        }
+
+        // CSVデータを生成してダウンロードする関数
+        function generateCSV() {
+            var csvContent = '"Participant","Registration Time"\n'; // CSVヘッダー
+
+            // 参加者ごとにCSV行を追加
+            participants.forEach(function(participant) {
+                csvContent += '"' + participant + '","' + new Date().toLocaleString() + '"\n';
+            });
+
+            // ファイル名を決定
+            var fileName = 'registrations.csv';
+
+            // CSVデータをBlobオブジェクトとして作成
+            var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+
+            // ダウンロードリンクの作成
+            var downloadLink = document.createElement('a');
+            downloadLink.href = window.URL.createObjectURL(blob);
+            downloadLink.download = fileName;
+
+            // ダウンロードリンクをクリックしてファイルをダウンロード
+            downloadLink.click();
+        }
+
+        // 選択用ドロップダウンメニューを更新する関数
+        function updateParticipantList() {
+            participantSelect.innerHTML = ''; // ドロップダウンメニューをクリア
+
+            // 参加者のリストを再びセットアップ
+            participants.forEach(function(participant) {
+                var option = document.createElement('option');
+                option.text = participant;
+                participantSelect.add(option);
+            });
+        }
+
+        // 通知音を再生する関数
+        function playNotificationSound() {
+            var audio = document.getElementById('notificationSound');
+            audio.play();
+        }
+    </script>
+</body>
+</html>
